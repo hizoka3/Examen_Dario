@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title></title>
+
+	<link rel="stylesheet" href="css/jquery.mobile-1.4.5.min.css" />
+
+	<script src="js/jquery-1.11.3.min"></script>
+	<script src="js/jquery.mobile-1.4.5.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  </head>
+  <body>
+
+    <div data-role="page" id="login">
+      <div data-role="content">
+        
+        <div class="contLogin">
+          <img src="img/logo.png">
+          <form id="loginForm" name="loginForm">
+            <input type="text" id="usuario" name="usuario" placeholder="nombre de usuario">
+            <input type="password" id="clave" name="clave" placeholder="clave de ingreso">
+            <input type="submit" value="ingresar">
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+  	<div data-role="page" id="pantallaLista">  		
+  		<div data-role="header">
+  			<h1>Chat Clase</h1>
+  		</div>
+
+  		<ul data-role="listview" id="listaDinamica">
+  		</ul>
+        
+        <form accept-charset="utf-8" id="formulario" name="formulario">
+          <input type="hidden" name="autor" id="autor">
+          <textarea name="mensaje" id="mensaje"></textarea>          
+          <input type="submit" id="enviar">
+        </form>
+
+  	</div>
+ 
+
+
+  	<SCRIPT TYPE="text/javascript">
+
+  		var infoGlobal;
+  		var indiceGlobal;
+
+  		//listener de pantalla
+  		$("#pantallaLista").on('pagebeforeshow' , function(){
+  			mostrarTextos();  		
+  		})
+
+  		//La forma de mostrar los textos
+  		function mostrarTextos(){
+  			$.getJSON("http://carlossolis.mobi/examen-udla/lista.php", function(datos){
+
+  				infoGlobal = datos;
+  				var items = "";
+
+  				$.each( datos , function(indice, valor){
+
+  					var linea = '';
+
+  						linea += '<li id="' + indice + '">';
+  						linea += '<h1>' + valor.autor + '</h1>';
+  						linea += valor.mensaje;
+  						linea += '</li>';
+
+  						// Una vez generada la linea nueva, la incluimos a la lista
+  						items += linea
+  				});
+  				$("#listaDinamica").html( items );
+  				$("#listaDinamica").listview("refresh");
+  			})
+  		}
+
+
+
+
+  		//Enviar los datos del server
+  		$("#formulario").submit( function(evento){  
+  			$.post('http://carlossolis.mobi/examen-udla/envio-mensaje.php', $("#formulario").serialize() )
+  				.done(function(_datosDeRespuesta){
+  					
+          var respuesta = JSON.parse(_datosDeRespuesta);
+
+          if( respuesta.respuesta != "ok"){
+              alert(respuesta.respuesta)
+            }
+          
+          mostrarTextos()
+          $('#mensaje').val("");
+
+  			})
+  				.fail(function(){
+  					alert("todo mal")
+  				})
+  			evento.preventDefault();
+  		})
+
+
+
+      /// Envio los datos del usuario
+      $('#loginForm').submit( function(evento){
+        //http://carlossolis.mobi/examen-udla/login.php
+        $.post('http://carlossolis.mobi/examen-udla/login.php', $("#loginForm").serialize() )
+          .done(function(_datosDeRespuesta){
+
+            var respuesta = JSON.parse(_datosDeRespuesta);
+
+            if( respuesta[0].status == "ok"){
+              //ir a pagina principal
+              $.mobile.changePage("#pantallaLista")
+            }else if(respuesta[0].status == "error"){
+              alert(respuesta[0].mensaje)
+            }
+
+
+            // Check browser support
+            if (typeof(Storage) != "undefined") {
+                // Store
+                localStorage.setItem("lastname", $('#usuario').val() );
+                // Retrieve
+                document.getElementById("autor").value = localStorage.getItem("lastname");
+            } else {
+                document.getElementById("autor").value = "Sorry, your browser does not support Web Storage...";
+            }
+
+        })
+        .fail(function(){
+          alert("Error")
+        })
+
+
+        evento.preventDefault();
+      });
+
+  	</SCRIPT>
+
+
+  </body>
+</html>
